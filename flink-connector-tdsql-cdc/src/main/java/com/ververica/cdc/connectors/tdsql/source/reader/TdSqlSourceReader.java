@@ -114,6 +114,8 @@ public class TdSqlSourceReader<T>
                     uncompletedBinlogSplits.remove(split.splitId());
                     split = discoverTableSchemasForBinlogSplit(split);
                     unfinishedSplits.add(split);
+                    // request next tdsql set splits.
+                    context.sendSplitRequest();
                 }
             } else {
                 MySqlSplit mySqlSplit = split.mySqlSplit();
