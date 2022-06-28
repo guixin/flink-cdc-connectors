@@ -2,6 +2,7 @@ package com.ververica.cdc.connectors.tdsql.source;
 
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.annotation.PublicEvolving;
+import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.api.connector.source.Source;
@@ -50,6 +51,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.ververica.cdc.connectors.mysql.debezium.DebeziumUtils.discoverCapturedTables;
@@ -72,11 +74,18 @@ public class TdSqlSource<T>
     private final MySqlSourceConfigFactory configFactory;
     private final DebeziumDeserializationSchema<T> deserializationSchema;
 
+    private Function<JdbcConnection, List<TdSqlSet>> discoverSetFunc;
+
     TdSqlSource(
             MySqlSourceConfigFactory configFactory,
             DebeziumDeserializationSchema<T> deserializationSchema) {
         this.configFactory = configFactory;
         this.deserializationSchema = deserializationSchema;
+    }
+
+    @VisibleForTesting
+    protected void setDiscoverSetFunc(Function<JdbcConnection, List<TdSqlSet>> discoverSetFunc) {
+        this.discoverSetFunc = discoverSetFunc;
     }
 
     @PublicEvolving
@@ -146,7 +155,11 @@ public class TdSqlSource<T>
         Map<TdSqlSet, MySqlSplitAssigner> assignerMap = new HashMap<>();
 
         try (JdbcConnection jdbc = openJdbcConnection(sourceConfig)) {
-            sets = discoverSets(jdbc);
+            if (this.discoverSetFunc != null) {
+                sets = discoverSetFunc.apply(jdbc);
+            } else {
+                sets = discoverSets(jdbc);
+            }
         }
         boolean initialStartMode =
                 sourceConfig.getStartupOptions().startupMode == StartupMode.INITIAL;
