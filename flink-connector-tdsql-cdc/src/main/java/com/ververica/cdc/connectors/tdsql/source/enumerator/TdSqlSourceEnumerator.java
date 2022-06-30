@@ -95,7 +95,8 @@ public class TdSqlSourceEnumerator implements SplitEnumerator<TdSqlSplit, TdSqlP
             for (int i = 0; i < currentParallelism; i++) {
                 int subtaskId = i % currentParallelism;
                 int setIndex = i % size;
-                List<TdSqlSet> partitionSet = readerRef.getOrDefault(subtaskId, new ArrayList<>(size));
+                List<TdSqlSet> partitionSet =
+                        readerRef.getOrDefault(subtaskId, new ArrayList<>(size));
                 partitionSet.add(sets.get(setIndex));
                 readerRef.put(subtaskId, partitionSet);
             }
@@ -103,7 +104,8 @@ public class TdSqlSourceEnumerator implements SplitEnumerator<TdSqlSplit, TdSqlP
             int index = 0;
             for (TdSqlSet set : tdSqlAssigners.keySet()) {
                 int subtaskId = index % currentParallelism;
-                List<TdSqlSet> partitionSet = readerRef.getOrDefault(subtaskId, new ArrayList<>(size));
+                List<TdSqlSet> partitionSet =
+                        readerRef.getOrDefault(subtaskId, new ArrayList<>(size));
                 partitionSet.add(set);
                 readerRef.put(subtaskId, partitionSet);
                 index++;

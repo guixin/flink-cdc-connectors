@@ -18,11 +18,12 @@
 
 package com.ververica.cdc.connectors.tdsql.source;
 
+import org.apache.flink.annotation.PublicEvolving;
+
 import com.ververica.cdc.connectors.mysql.source.MySqlSource;
 import com.ververica.cdc.connectors.mysql.source.config.MySqlSourceConfigFactory;
 import com.ververica.cdc.connectors.mysql.table.StartupOptions;
 import com.ververica.cdc.debezium.DebeziumDeserializationSchema;
-import org.apache.flink.annotation.PublicEvolving;
 
 import java.time.Duration;
 import java.util.Properties;

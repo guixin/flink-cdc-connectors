@@ -18,14 +18,6 @@
 
 package com.ververica.cdc.connectors.tdsql.table;
 
-import com.ververica.cdc.connectors.mysql.table.MySqlDeserializationConverterFactory;
-import com.ververica.cdc.connectors.mysql.table.MySqlReadableMetadata;
-import com.ververica.cdc.connectors.mysql.table.StartupOptions;
-import com.ververica.cdc.connectors.tdsql.bases.set.TdSqlSet;
-import com.ververica.cdc.connectors.tdsql.source.TdSqlSource;
-import com.ververica.cdc.debezium.DebeziumDeserializationSchema;
-import com.ververica.cdc.debezium.table.MetadataConverter;
-import com.ververica.cdc.debezium.table.RowDataDebeziumDeserializeSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.connector.ChangelogMode;
@@ -39,7 +31,17 @@ import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.types.RowKind;
 import org.apache.flink.util.StringUtils;
 
+import com.ververica.cdc.connectors.mysql.table.MySqlDeserializationConverterFactory;
+import com.ververica.cdc.connectors.mysql.table.MySqlReadableMetadata;
+import com.ververica.cdc.connectors.mysql.table.StartupOptions;
+import com.ververica.cdc.connectors.tdsql.bases.set.TdSqlSet;
+import com.ververica.cdc.connectors.tdsql.source.TdSqlSource;
+import com.ververica.cdc.debezium.DebeziumDeserializationSchema;
+import com.ververica.cdc.debezium.table.MetadataConverter;
+import com.ververica.cdc.debezium.table.RowDataDebeziumDeserializeSchema;
+
 import javax.annotation.Nullable;
+
 import java.time.Duration;
 import java.time.ZoneId;
 import java.util.Collections;
