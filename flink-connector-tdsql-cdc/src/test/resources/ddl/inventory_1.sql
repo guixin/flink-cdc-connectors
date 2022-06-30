@@ -40,10 +40,11 @@ CREATE TABLE products_on_hand (
   FOREIGN KEY (product_id) REFERENCES products(id)
 );
 
-INSERT INTO products_on_hand VALUES (106,0);
-INSERT INTO products_on_hand VALUES (107,44);
-INSERT INTO products_on_hand VALUES (108,2);
-INSERT INTO products_on_hand VALUES (109,5);
+INSERT INTO products_on_hand VALUES (101,3);
+INSERT INTO products_on_hand VALUES (102,8);
+INSERT INTO products_on_hand VALUES (103,18);
+INSERT INTO products_on_hand VALUES (104,4);
+INSERT INTO products_on_hand VALUES (105,5);
 
 -- Create some customers ...
 CREATE TABLE customers (

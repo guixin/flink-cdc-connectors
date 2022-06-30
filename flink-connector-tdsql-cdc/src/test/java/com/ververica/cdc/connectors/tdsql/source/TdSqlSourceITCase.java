@@ -36,6 +36,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 import java.time.ZoneId;
@@ -52,6 +54,7 @@ import static org.apache.flink.util.Preconditions.checkState;
 
 /** IT test for {@link TdSqlSource}. */
 public class TdSqlSourceITCase extends TdSqlSourceTestBase {
+    private static final Logger LOG = LoggerFactory.getLogger(TdSqlSourceITCase.class);
 
     @Rule public final Timeout timeoutPerTest = Timeout.seconds(300);
 
@@ -113,7 +116,6 @@ public class TdSqlSourceITCase extends TdSqlSourceTestBase {
                 DEFAULT_PARALLELISM, failoverType, failoverPhase, captureCustomerTables);
     }
 
-    @Test
     public void testTdSqlParallelSource(
             int parallelism,
             FailoverType failoverType,
@@ -125,7 +127,7 @@ public class TdSqlSourceITCase extends TdSqlSourceTestBase {
         StreamTableEnvironment tEnv = StreamTableEnvironment.create(env);
 
         env.setParallelism(parallelism);
-        env.enableCheckpointing(200L);
+        env.enableCheckpointing(60000L);
         env.setRestartStrategy(RestartStrategies.fixedDelayRestart(1, 0));
 
         String sourceDDL =
@@ -137,7 +139,7 @@ public class TdSqlSourceITCase extends TdSqlSourceTestBase {
                                 + " phone_number STRING,"
                                 + " primary key (id) not enforced"
                                 + ") WITH ("
-                                + " 'connector' = 'mysql-cdc',"
+                                + " 'connector' = 'tdsql-cdc',"
                                 + " 'scan.incremental.snapshot.enabled' = 'true',"
                                 + " 'hostname' = '%s',"
                                 + " 'port' = '%s',"
@@ -146,15 +148,23 @@ public class TdSqlSourceITCase extends TdSqlSourceTestBase {
                                 + " 'database-name' = '%s',"
                                 + " 'table-name' = '%s',"
                                 + " 'scan.incremental.snapshot.chunk.size' = '100',"
-                                + " 'server-id' = '%s'"
+                                + " 'server-id' = '%s',"
+                                + " 'is_test' = 'true',"
+                                + " 'test_tdsql_sets' = '%s'"
                                 + ")",
-                        customDatabase.getHost(),
-                        customDatabase.getDatabasePort(),
+                        customDatabase.getHost(0),
+                        customDatabase.getDatabasePort(0),
                         customDatabase.getUsername(),
                         customDatabase.getPassword(),
                         customDatabase.getDatabaseName(),
                         getTableNameRegex(captureCustomerTables),
-                        getServerId());
+                        getServerId(),
+                        String.format(
+                                "%s:%d;%s:%d",
+                                customDatabase.getHost(0),
+                                customDatabase.getDatabasePort(0),
+                                customDatabase.getHost(1),
+                                customDatabase.getDatabasePort(1)));
 
         // first step: check the snapshot data
         String[] snapshotForSingleTable =
@@ -193,6 +203,7 @@ public class TdSqlSourceITCase extends TdSqlSourceTestBase {
 
         // trigger failover after some snapshot splits read finished
         if (failoverPhase == FailoverPhase.SNAPSHOT && iterator.hasNext()) {
+            LOG.info("trigger failover after some snapshot splits read finished");
             triggerFailover(
                     failoverType, jobId, miniClusterResource.getMiniCluster(), () -> sleepMs(100));
         }

@@ -33,7 +33,6 @@ import java.util.Set;
 @SuppressWarnings("rawtypes")
 public class MySqlContainer extends JdbcDatabaseContainer {
 
-    public static final String IMAGE = "mysql";
     private static final String MY_CNF_CONFIG_OVERRIDE_PARAM_NAME = "MY_CNF";
     private static final String SETUP_SQL_PARAM_NAME = "SETUP_SQL";
     private static final String MYSQL_ROOT_USER = "root";
@@ -44,12 +43,8 @@ public class MySqlContainer extends JdbcDatabaseContainer {
 
     private final int port;
 
-    public MySqlContainer() {
-        this(MySqlVersion.V5_7, 3306);
-    }
-
     public MySqlContainer(MySqlVersion version, int port) {
-        super(DockerImageName.parse(IMAGE + ":" + version.getVersion()));
+        super(DockerImageName.parse(version.getImage() + ":" + version.getVersion()));
         this.port = port;
         addExposedPort(port);
     }
@@ -95,13 +90,16 @@ public class MySqlContainer extends JdbcDatabaseContainer {
 
     public String getJdbcUrl(String databaseName) {
         String additionalUrlParams = constructUrlParameters("?", "&");
-        return "jdbc:mysql://"
-                + getHost()
-                + ":"
-                + getDatabasePort()
-                + "/"
-                + databaseName
-                + additionalUrlParams;
+        String url =
+                "jdbc:mysql://"
+                        + getHost()
+                        + ":"
+                        + getDatabasePort()
+                        + "/"
+                        + databaseName
+                        + additionalUrlParams;
+        logger().info("connect {} in  port {}", url, this.port);
+        return url;
     }
 
     @Override

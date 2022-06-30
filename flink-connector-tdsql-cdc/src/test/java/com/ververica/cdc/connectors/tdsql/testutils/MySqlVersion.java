@@ -20,19 +20,23 @@ package com.ververica.cdc.connectors.tdsql.testutils;
 
 /** MySql version enum. */
 public enum MySqlVersion {
-    V5_5("5.5"),
-    V5_6("5.6"),
-    V5_7("5.7"),
-    V8_0("8.0");
+    V8_0("mysql", "8.0"),
+    AARACH64_V8_0("arm64v8/mysql", "8.0-oracle");
 
     private String version;
+    private String image;
 
-    MySqlVersion(String version) {
+    MySqlVersion(String image, String version) {
         this.version = version;
+        this.image = image;
     }
 
     public String getVersion() {
         return version;
+    }
+
+    public String getImage() {
+        return image;
     }
 
     @Override

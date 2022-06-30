@@ -24,7 +24,7 @@ CREATE TABLE products (
   description VARCHAR(512),
   weight FLOAT
 );
-ALTER TABLE products AUTO_INCREMENT = 101;
+ALTER TABLE products AUTO_INCREMENT = 106;
 
 INSERT INTO products
 VALUES (default,"hammer","16oz carpenter's hammer",1.0),
@@ -39,11 +39,10 @@ CREATE TABLE products_on_hand (
   FOREIGN KEY (product_id) REFERENCES products(id)
 );
 
-INSERT INTO products_on_hand VALUES (101,3);
-INSERT INTO products_on_hand VALUES (102,8);
-INSERT INTO products_on_hand VALUES (103,18);
-INSERT INTO products_on_hand VALUES (104,4);
-INSERT INTO products_on_hand VALUES (105,5);
+INSERT INTO products_on_hand VALUES (106,0);
+INSERT INTO products_on_hand VALUES (107,44);
+INSERT INTO products_on_hand VALUES (108,2);
+INSERT INTO products_on_hand VALUES (109,5);
 
 -- Create some customers ...
 CREATE TABLE customers (
@@ -51,7 +50,7 @@ CREATE TABLE customers (
   first_name VARCHAR(255) NOT NULL,
   last_name VARCHAR(255) NOT NULL,
   email VARCHAR(255) NOT NULL UNIQUE KEY
-) AUTO_INCREMENT=1001;
+) AUTO_INCREMENT=1003;
 
 
 INSERT INTO customers
@@ -67,11 +66,10 @@ CREATE TABLE orders (
   product_id INTEGER NOT NULL,
   FOREIGN KEY order_customer (purchaser) REFERENCES customers(id),
   FOREIGN KEY ordered_product (product_id) REFERENCES products(id)
-) AUTO_INCREMENT = 10001;
+) AUTO_INCREMENT = 10004;
 
 INSERT INTO orders
 VALUES (default, '2016-02-18', 1004, 3, 109),
-       (default, '2016-02-19', 1002, 2, 106),
        (default, '16-02-21', 1003, 1, 107);
 
 CREATE TABLE category

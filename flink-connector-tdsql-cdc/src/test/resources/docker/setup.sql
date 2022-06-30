@@ -21,8 +21,8 @@
 -- 2) 'mysqluser' - all privileges
 --
 GRANT SELECT, RELOAD, SHOW DATABASES, REPLICATION SLAVE, REPLICATION CLIENT, LOCK TABLES  ON *.* TO 'flinkuser'@'%';
-CREATE USER 'mysqluser' IDENTIFIED BY 'mysqlpw';
-GRANT ALL PRIVILEGES ON *.* TO 'mysqluser'@'%';
+CREATE USER 'tdsqluser' IDENTIFIED BY 'tdsqlpw';
+GRANT ALL PRIVILEGES ON *.* TO 'tdsqluser'@'%';
 
 -- ----------------------------------------------------------------------------------------------------------------
 -- DATABASE:  emptydb

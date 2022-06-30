@@ -45,10 +45,11 @@ public abstract class TdSqlSourceTestBase extends TestLogger {
     private static final Logger LOG = LoggerFactory.getLogger(TdSqlSourceTestBase.class);
 
     protected static final int DEFAULT_PARALLELISM = 4;
-    protected static final MySqlContainer TDSQL_SET_1 =
-            createMySqlContainer(MySqlVersion.V8_0, 3306);
-    protected static final MySqlContainer TDSQL_SET_2 =
-            createMySqlContainer(MySqlVersion.V8_0, 3307);
+
+    public static final String AARCH64_OS = "aarch64";
+
+    protected static final MySqlContainer TDSQL_SET_1 = createMySqlContainer(3306);
+    protected static final MySqlContainer TDSQL_SET_2 = createMySqlContainer(3306);
 
     @Rule
     public final MiniClusterWithClientResource miniClusterResource =
@@ -71,7 +72,14 @@ public abstract class TdSqlSourceTestBase extends TestLogger {
         return Stream.of(TDSQL_SET_1, TDSQL_SET_2).collect(Collectors.toList());
     }
 
-    protected static MySqlContainer createMySqlContainer(MySqlVersion version, int port) {
+    protected static MySqlContainer createMySqlContainer(int port) {
+        String osArch = System.getProperty("os.arch");
+        MySqlVersion version;
+        if (AARCH64_OS.equals(osArch)) {
+            version = MySqlVersion.AARACH64_V8_0;
+        } else {
+            version = MySqlVersion.V8_0;
+        }
         return (MySqlContainer)
                 new MySqlContainer(version, port)
                         .withConfigurationOverride("docker/server-gtids/my.cnf")

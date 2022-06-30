@@ -62,6 +62,7 @@ import com.ververica.cdc.debezium.DebeziumDeserializationSchema;
 import io.debezium.jdbc.JdbcConnection;
 import io.debezium.relational.TableId;
 import org.apache.kafka.connect.source.SourceRecord;
+import org.eclipse.jetty.util.ajax.JSON;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +70,6 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.ververica.cdc.connectors.mysql.debezium.DebeziumUtils.discoverCapturedTables;
@@ -92,7 +92,7 @@ public class TdSqlSource<T>
     private final MySqlSourceConfigFactory configFactory;
     private final DebeziumDeserializationSchema<T> deserializationSchema;
 
-    private Function<JdbcConnection, List<TdSqlSet>> discoverSetFunc;
+    private List<TdSqlSet> testSets;
 
     TdSqlSource(
             MySqlSourceConfigFactory configFactory,
@@ -101,14 +101,15 @@ public class TdSqlSource<T>
         this.deserializationSchema = deserializationSchema;
     }
 
-    @VisibleForTesting
-    protected void setDiscoverSetFunc(Function<JdbcConnection, List<TdSqlSet>> discoverSetFunc) {
-        this.discoverSetFunc = discoverSetFunc;
-    }
-
     @PublicEvolving
     public static <T> TdSqlSourceBuilder<T> builder() {
         return new TdSqlSourceBuilder<>();
+    }
+
+    @VisibleForTesting
+    public void setTestSets(List<TdSqlSet> sets) {
+        LOGGER.info("set tdsql sets: {}", JSON.toString(sets));
+        this.testSets = sets;
     }
 
     @Override
@@ -172,10 +173,10 @@ public class TdSqlSource<T>
         List<TdSqlSet> sets;
         Map<TdSqlSet, MySqlSplitAssigner> assignerMap = new HashMap<>();
 
-        try (JdbcConnection jdbc = openJdbcConnection(sourceConfig)) {
-            if (this.discoverSetFunc != null) {
-                sets = discoverSetFunc.apply(jdbc);
-            } else {
+        if (testSets != null && testSets.size() > 0) {
+            sets = this.testSets;
+        } else {
+            try (JdbcConnection jdbc = openJdbcConnection(sourceConfig)) {
                 sets = discoverSets(jdbc);
             }
         }

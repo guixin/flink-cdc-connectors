@@ -18,14 +18,11 @@
 
 package com.ververica.cdc.connectors.tdsql.source;
 
-import org.apache.flink.annotation.PublicEvolving;
-
 import com.ververica.cdc.connectors.mysql.source.MySqlSource;
 import com.ververica.cdc.connectors.mysql.source.config.MySqlSourceConfigFactory;
 import com.ververica.cdc.connectors.mysql.table.StartupOptions;
 import com.ververica.cdc.debezium.DebeziumDeserializationSchema;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.flink.annotation.PublicEvolving;
 
 import java.time.Duration;
 import java.util.Properties;
@@ -37,7 +34,6 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  */
 @PublicEvolving
 public class TdSqlSourceBuilder<T> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TdSqlSourceBuilder.class);
     private final MySqlSourceConfigFactory configFactory = new MySqlSourceConfigFactory();
     private DebeziumDeserializationSchema<T> deserializer;
 
@@ -221,7 +217,6 @@ public class TdSqlSourceBuilder<T> {
      * @return a MySqlParallelSource with the settings made for this builder.
      */
     public TdSqlSource<T> build() {
-        LOGGER.info("build tdsql source....");
         return new TdSqlSource<>(configFactory, checkNotNull(deserializer));
     }
 }

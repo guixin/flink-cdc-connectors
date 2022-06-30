@@ -89,13 +89,25 @@ public class TdSqlSourceEnumerator implements SplitEnumerator<TdSqlSplit, TdSqlP
     @Override
     public void start() {
         int size = tdSqlAssigners.size();
-        int index = 0;
-        for (TdSqlSet set : tdSqlAssigners.keySet()) {
-            int subtaskId = index % currentParallelism;
-            List<TdSqlSet> partitionSet = readerRef.getOrDefault(subtaskId, new ArrayList<>(size));
-            partitionSet.add(set);
-            readerRef.put(subtaskId, partitionSet);
-            index++;
+        List<TdSqlSet> sets = new ArrayList<>(tdSqlAssigners.keySet());
+
+        if (currentParallelism >= size) {
+            for (int i = 0; i < currentParallelism; i++) {
+                int subtaskId = i % currentParallelism;
+                int setIndex = i % size;
+                List<TdSqlSet> partitionSet = readerRef.getOrDefault(subtaskId, new ArrayList<>(size));
+                partitionSet.add(sets.get(setIndex));
+                readerRef.put(subtaskId, partitionSet);
+            }
+        } else {
+            int index = 0;
+            for (TdSqlSet set : tdSqlAssigners.keySet()) {
+                int subtaskId = index % currentParallelism;
+                List<TdSqlSet> partitionSet = readerRef.getOrDefault(subtaskId, new ArrayList<>(size));
+                partitionSet.add(set);
+                readerRef.put(subtaskId, partitionSet);
+                index++;
+            }
         }
 
         LOG.trace("dispatch rule: {}", JSON.toString(readerRef));
@@ -116,7 +128,7 @@ public class TdSqlSourceEnumerator implements SplitEnumerator<TdSqlSplit, TdSqlP
 
     @Override
     public void addSplitsBack(List<TdSqlSplit> splits, int subtaskId) {
-        LOG.info("TdSql Source Enumerator adds splits back: {}", splits);
+        LOG.info("TdSql Source Enumerator adds splits back: {}, subtaskId {}", splits, subtaskId);
 
         splits.stream()
                 .collect(
@@ -191,6 +203,11 @@ public class TdSqlSourceEnumerator implements SplitEnumerator<TdSqlSplit, TdSqlP
 
     private boolean assignSplits(int subtaskId) {
         List<TdSqlSet> sets = readerRef.get(subtaskId);
+
+        if (sets == null || sets.isEmpty()) {
+            LOG.info("subtaskid {} can not find tdsql set.", subtaskId);
+            return true;
+        }
 
         for (TdSqlSet set : sets) {
             Optional<MySqlSplit> split = tdSqlAssigners.get(set).getNext();

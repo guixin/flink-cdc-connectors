@@ -18,6 +18,13 @@
 
 package com.ververica.cdc.connectors.tdsql.table;
 
+import com.ververica.cdc.connectors.mysql.source.config.MySqlSourceOptions;
+import com.ververica.cdc.connectors.mysql.source.config.ServerIdRange;
+import com.ververica.cdc.connectors.mysql.table.JdbcUrlUtils;
+import com.ververica.cdc.connectors.mysql.table.StartupMode;
+import com.ververica.cdc.connectors.mysql.table.StartupOptions;
+import com.ververica.cdc.connectors.tdsql.source.config.TdSqlSourceOptions;
+import com.ververica.cdc.debezium.table.DebeziumOptions;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ReadableConfig;
 import org.apache.flink.table.api.ValidationException;
@@ -25,13 +32,6 @@ import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.connector.source.DynamicTableSource;
 import org.apache.flink.table.factories.DynamicTableSourceFactory;
 import org.apache.flink.table.factories.FactoryUtil;
-
-import com.ververica.cdc.connectors.mysql.source.config.MySqlSourceOptions;
-import com.ververica.cdc.connectors.mysql.source.config.ServerIdRange;
-import com.ververica.cdc.connectors.mysql.table.JdbcUrlUtils;
-import com.ververica.cdc.connectors.mysql.table.StartupMode;
-import com.ververica.cdc.connectors.mysql.table.StartupOptions;
-import com.ververica.cdc.debezium.table.DebeziumOptions;
 
 import java.time.Duration;
 import java.time.ZoneId;
@@ -116,7 +116,6 @@ public class TdSqlTableSourceFactory implements DynamicTableSourceFactory {
             validateDistributionFactorUpper(distributionFactorUpper);
             validateDistributionFactorLower(distributionFactorLower);
         }
-
         return new TdSqlTableSource(
                 physicalSchema,
                 port,
@@ -140,7 +139,9 @@ public class TdSqlTableSourceFactory implements DynamicTableSourceFactory {
                 startupOptions,
                 scanNewlyAddedTableEnabled,
                 JdbcUrlUtils.getJdbcProperties(context.getCatalogTable().getOptions()),
-                heartbeatInterval);
+                heartbeatInterval,
+                config.get(TdSqlSourceOptions.IS_TEST),
+                config.get(TdSqlSourceOptions.TEST_TDSQL_SETS));
     }
 
     @Override
@@ -180,6 +181,8 @@ public class TdSqlTableSourceFactory implements DynamicTableSourceFactory {
         options.add(CONNECT_MAX_RETRIES);
         options.add(SCAN_NEWLY_ADDED_TABLE_ENABLED);
         options.add(HEARTBEAT_INTERVAL);
+        options.add(TdSqlSourceOptions.IS_TEST);
+        options.add(TdSqlSourceOptions.TEST_TDSQL_SETS);
         return options;
     }
 

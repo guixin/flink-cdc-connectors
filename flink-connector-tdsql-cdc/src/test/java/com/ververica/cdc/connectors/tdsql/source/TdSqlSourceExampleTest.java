@@ -26,13 +26,15 @@ import com.ververica.cdc.connectors.tdsql.testutils.TdSqlDatabase;
 import com.ververica.cdc.debezium.JsonDebeziumDeserializationSchema;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /** Example test for {@link TdSqlSource}. */
 public class TdSqlSourceExampleTest extends TdSqlSourceTestBase {
-
+    private static final Logger LOG = LoggerFactory.getLogger(TdSqlSourceExampleTest.class);
     private final TdSqlDatabase inventoryDatabase =
             new TdSqlDatabase(tdSqlSets(), "inventory", "tdsqluser", "tdsqlpw");
 
@@ -41,10 +43,19 @@ public class TdSqlSourceExampleTest extends TdSqlSourceTestBase {
     public void testConsumingAllEvents() throws Exception {
         inventoryDatabase.createAndInitialize();
 
+        LOG.info(
+                "first container address: {}:{}",
+                inventoryDatabase.getHost(0),
+                inventoryDatabase.getDatabasePort(0));
+        LOG.info(
+                "second container address: {}:{}",
+                inventoryDatabase.getHost(1),
+                inventoryDatabase.getDatabasePort(1));
+
         TdSqlSource<String> tdSqlSource =
                 TdSqlSource.<String>builder()
-                        .hostname(inventoryDatabase.getHost())
-                        .port(inventoryDatabase.getDatabasePort())
+                        .hostname(inventoryDatabase.getHost(0))
+                        .port(inventoryDatabase.getDatabasePort(0))
                         .databaseList(inventoryDatabase.getDatabaseName())
                         .tableList(inventoryDatabase.getDatabaseName() + ".products")
                         .username(inventoryDatabase.getUsername())
@@ -54,13 +65,17 @@ public class TdSqlSourceExampleTest extends TdSqlSourceTestBase {
                         .includeSchemaChanges(true) // output the schema changes as well
                         .build();
 
-        tdSqlSource.setDiscoverSetFunc(
-                conn ->
-                        Stream.of(
-                                        new TdSqlSet("set_1", "127.0.0.1", 3306),
-                                        new TdSqlSet("set_2", "127.0.0.1", 3307),
-                                        new TdSqlSet())
-                                .collect(Collectors.toList()));
+        tdSqlSource.setTestSets(
+                Stream.of(
+                                new TdSqlSet(
+                                        "set_1",
+                                        inventoryDatabase.getHost(0),
+                                        inventoryDatabase.getDatabasePort(0)),
+                                new TdSqlSet(
+                                        "set_2",
+                                        inventoryDatabase.getHost(1),
+                                        inventoryDatabase.getDatabasePort(1)))
+                        .collect(Collectors.toList()));
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         // enable checkpoint

@@ -18,6 +18,14 @@
 
 package com.ververica.cdc.connectors.tdsql.table;
 
+import com.ververica.cdc.connectors.mysql.table.MySqlDeserializationConverterFactory;
+import com.ververica.cdc.connectors.mysql.table.MySqlReadableMetadata;
+import com.ververica.cdc.connectors.mysql.table.StartupOptions;
+import com.ververica.cdc.connectors.tdsql.bases.set.TdSqlSet;
+import com.ververica.cdc.connectors.tdsql.source.TdSqlSource;
+import com.ververica.cdc.debezium.DebeziumDeserializationSchema;
+import com.ververica.cdc.debezium.table.MetadataConverter;
+import com.ververica.cdc.debezium.table.RowDataDebeziumDeserializeSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.connector.ChangelogMode;
@@ -29,17 +37,9 @@ import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.types.RowKind;
-
-import com.ververica.cdc.connectors.mysql.table.MySqlDeserializationConverterFactory;
-import com.ververica.cdc.connectors.mysql.table.MySqlReadableMetadata;
-import com.ververica.cdc.connectors.mysql.table.StartupOptions;
-import com.ververica.cdc.connectors.tdsql.source.TdSqlSource;
-import com.ververica.cdc.debezium.DebeziumDeserializationSchema;
-import com.ververica.cdc.debezium.table.MetadataConverter;
-import com.ververica.cdc.debezium.table.RowDataDebeziumDeserializeSchema;
+import org.apache.flink.util.StringUtils;
 
 import javax.annotation.Nullable;
-
 import java.time.Duration;
 import java.time.ZoneId;
 import java.util.Collections;
@@ -57,7 +57,6 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * description.
  */
 public class TdSqlTableSource implements ScanTableSource, SupportsReadingMetadata {
-
     private final ResolvedSchema physicalSchema;
     private final int port;
     private final String hostname;
@@ -91,6 +90,9 @@ public class TdSqlTableSource implements ScanTableSource, SupportsReadingMetadat
 
     /** Metadata that is appended at the end of a physical source row. */
     protected List<String> metadataKeys;
+
+    private final boolean isTest;
+    private final String testSets;
 
     public TdSqlTableSource(
             ResolvedSchema physicalSchema,
@@ -137,7 +139,9 @@ public class TdSqlTableSource implements ScanTableSource, SupportsReadingMetadat
                 startupOptions,
                 false,
                 new Properties(),
-                heartbeatInterval);
+                heartbeatInterval,
+                false,
+                "");
     }
 
     public TdSqlTableSource(
@@ -163,7 +167,9 @@ public class TdSqlTableSource implements ScanTableSource, SupportsReadingMetadat
             StartupOptions startupOptions,
             boolean scanNewlyAddedTableEnabled,
             Properties jdbcProperties,
-            Duration heartbeatInterval) {
+            Duration heartbeatInterval,
+            boolean isTest,
+            String testSets) {
         this.physicalSchema = physicalSchema;
         this.port = port;
         this.hostname = checkNotNull(hostname);
@@ -190,6 +196,8 @@ public class TdSqlTableSource implements ScanTableSource, SupportsReadingMetadat
         this.producedDataType = physicalSchema.toPhysicalRowDataType();
         this.metadataKeys = Collections.emptyList();
         this.heartbeatInterval = heartbeatInterval;
+        this.isTest = isTest;
+        this.testSets = testSets;
     }
 
     @Override
@@ -244,6 +252,18 @@ public class TdSqlTableSource implements ScanTableSource, SupportsReadingMetadat
                         .jdbcProperties(jdbcProperties)
                         .heartbeatInterval(heartbeatInterval)
                         .build();
+
+        if (isTest && !StringUtils.isNullOrWhitespaceOnly(testSets)) {
+            String[] sets = testSets.split(";");
+            parallelSource.setTestSets(
+                    Stream.of(sets)
+                            .map(
+                                    s -> {
+                                        String[] addr = s.split(":");
+                                        return new TdSqlSet(s, addr[0], Integer.parseInt(addr[1]));
+                                    })
+                            .collect(Collectors.toList()));
+        }
         return SourceProvider.of(parallelSource);
     }
 
@@ -303,7 +323,9 @@ public class TdSqlTableSource implements ScanTableSource, SupportsReadingMetadat
                         startupOptions,
                         scanNewlyAddedTableEnabled,
                         jdbcProperties,
-                        heartbeatInterval);
+                        heartbeatInterval,
+                        isTest,
+                        testSets);
         source.metadataKeys = metadataKeys;
         source.producedDataType = producedDataType;
         return source;

@@ -18,6 +18,9 @@
 
 package com.ververica.cdc.connectors.tdsql.testutils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -44,7 +47,7 @@ import static org.junit.Assert.assertNotNull;
  * <p>This class is inspired from Debezium project.
  */
 public class TdSqlDatabase {
-
+    private static final Logger LOG = LoggerFactory.getLogger(TdSqlDatabase.class);
     private static final String[] CREATE_DATABASE_DDL =
             new String[] {"CREATE DATABASE $DBNAME$;", "USE $DBNAME$;"};
     private static final String DROP_DATABASE_DDL = "DROP DATABASE IF EXISTS $DBNAME$;";
@@ -82,12 +85,12 @@ public class TdSqlDatabase {
         this.password = password;
     }
 
-    public String getHost() {
-        return containers.get(0).getHost();
+    public String getHost(int index) {
+        return containers.get(index).getHost();
     }
 
-    public int getDatabasePort() {
-        return containers.get(0).getDatabasePort();
+    public int getDatabasePort(int index) {
+        return containers.get(index).getDatabasePort();
     }
 
     public String getDatabaseName() {
@@ -112,6 +115,7 @@ public class TdSqlDatabase {
         int index = 1;
         for (MySqlContainer container : containers) {
             final String ddlFile = String.format("ddl/%s_%d.sql", templateName, index++);
+            LOG.info("exec ddl file: {}", ddlFile);
             final URL ddlTestFile = TdSqlDatabase.class.getClassLoader().getResource(ddlFile);
             assertNotNull("Cannot locate " + ddlFile, ddlTestFile);
             try {
